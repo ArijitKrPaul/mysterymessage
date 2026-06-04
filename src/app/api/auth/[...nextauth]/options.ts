@@ -1,10 +1,10 @@
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/models/User";
 import bcrypt from "bcryptjs";
-import { NextAuthConfig } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-export const authOptions: NextAuthConfig = {
+export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -18,7 +18,7 @@ export const authOptions: NextAuthConfig = {
         try {
           const user = await UserModel.findOne({
             $or: [
-              { email: credentials.identifier.email },
+              { email: credentials.identifier },
               { username: credentials.identifier },
             ],
           });
@@ -29,8 +29,8 @@ export const authOptions: NextAuthConfig = {
             throw new Error("please verify your account firts");
           }
           const isPasswordCorrect = await bcrypt.compare(
-            user.password,
             credentials.password,
+            user.password,
           );
           if (isPasswordCorrect) {
             return user;
@@ -72,4 +72,4 @@ export const authOptions: NextAuthConfig = {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET_KEY,
-};
+});
